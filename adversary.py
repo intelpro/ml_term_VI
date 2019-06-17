@@ -1,4 +1,3 @@
-"""adversary.py"""
 from pathlib import Path
 
 import torch
@@ -12,6 +11,7 @@ from models.toynet import ToyNet_MNIST
 from models.toynet import ToyNet_CIFAR10
 from datasets.datasets import return_data
 from utils.utils import cuda, where
+
 
 
 class Attack(object):

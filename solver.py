@@ -8,6 +8,7 @@ from torch.autograd import Variable
 from torchvision.utils import save_image
 from models.toynet import ToyNet_MNIST
 from models.toynet import ToyNet_CIFAR10 # I added it.
+from models.resnet import ResNet18, ResNet34, ResNet50, ResNet101
 from datasets.datasets import return_data
 from utils.utils import cuda, where
 from adversary import Attack
@@ -52,13 +53,17 @@ class Solver(object):
         # Models & Optimizers
         self.model_init(args)
         self.load_ckpt = args.load_ckpt
-        if self.load_ckpt != '':
+        if args.load_ckpt_flag = True and self.load_ckpt != '':
             self.load_checkpoint(self.load_ckpt)
 
         # Adversarial Perturbation Generator
         #criterion = cuda(torch.nn.CrossEntropyLoss(), self.cuda)
         criterion = F.cross_entropy
-        self.attack = Attack(self.net, criterion=criterion)
+        self.attack_mode = args.attack_mode
+        if self.attack_mode == 'FGSM':
+            self.attack = Attack(self.net, criterion=criterion)
+        elif self.attack_mode == 'IterativeLeast':
+            self.attack = Attack(self.net, criterion=criterion)
 
     def visualization_init(self, args):
         # Visdom
@@ -73,10 +78,17 @@ class Solver(object):
             print("MNIST")
             self.net = cuda(ToyNet_MNIST(y_dim=self.y_dim), self.cuda)
         elif args.dataset =='CIFAR10':
-            print("CIFAR10")
-            self.net = cuda(ToyNet_CIFAR10(y_dim=self.y_dim), self.cuda)
+            print("Dataset used CIFAR10")
+            if args.network_choice == 'ToyNet':
+                self.net = cuda(ToyNet_CIFAR10(y_dim=self.y_dim), self.cuda)
+            elif args.network_choice == 'ResNet18':
+                self.net = cuda(ResNet18(), self.cuda)
+            elif args.network_choice == 'ResNet34':
+                self.net = cuda(ResNet34(), self.cuda)
+            elif args.network_choice == 'ResNet50':
+                self.net = cuda(ResNet50(), self.cuda)
         self.net.weight_init(_type='kaiming')
-        # Optimizers
+        # setup optimizer
         self.optim = optim.Adam([{'params':self.net.parameters(), 'lr':self.lr}],
                                 betas=(0.5, 0.999))
 
@@ -156,7 +168,11 @@ class Solver(object):
 
         # generate pertubation images, inside of self.FGSM, there are fgsm and i-fgsm method
         # please implement last one 'iterative least likely method'
-        x_adv, changed, values = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
+        if self.attack_mode == 'FGSM':
+            x_adv, changed, values = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
+            import pdb; pdb.set_trace()
+        elif self.attack_mode == 'IterativeLeast':
+            x_adv, changed, values = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
         accuracy, cost, accuracy_adv, cost_adv = values
 
         # save the result image, you can find in outputs/experiment_name

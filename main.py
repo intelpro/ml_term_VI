@@ -16,25 +16,25 @@ def main(args):
 
     np.set_printoptions(precision=4)
     torch.set_printoptions(precision=4)
-    net = Solver(args)
+    solver = Solver(args)
 
     if args.mode == 'train':
-        net.train()
+        solver.train()
     elif args.mode == 'test':
-        net.test()
+        solver.test()
     elif args.mode == 'generate':
-        net.generate(target=args.target,
+        solver.generate(target=args.target,
                      epsilon=args.epsilon,
                      alpha=args.alpha,
                      iteration=args.iteration)
     elif args.mode == 'universal':
-        net.universal(args)
+        solver.universal(args)
     else: return
     print('[*] Finished')
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='toynet template')
+    parser = argparse.ArgumentParser(description='toysolver template')
     parser.add_argument('--attack_mode', required=True, type=str, choices=['FGSM', 'IterativeLeast'])
     parser.add_argument('--epoch', type=int, default=30, help='epoch size')
     parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
@@ -46,6 +46,7 @@ if __name__ == "__main__":
     parser.add_argument('--output_dir', type=str, default='output', help='output directory path')
     parser.add_argument('--ckpt_dir', type=str, default='checkpoints', help='checkpoint directory path')
     parser.add_argument('--load_ckpt', type=str, default='best_acc.tar', help='')
+    parser.add_argument('--load_ckpt_flag', type=str2bool, required=True, help='load ckpt flag')
     parser.add_argument('--cuda', type=str2bool, default=True, help='enable cuda')
     parser.add_argument('--silent', type=str2bool, default=False, help='')
     parser.add_argument('--seed', type=int, default=1, help='random seed')
@@ -55,6 +56,7 @@ if __name__ == "__main__":
     parser.add_argument('--visdom_port', type=str, default=55558, help='visdom port')
     #######################################################################################################
     parser.add_argument('--dataset', type=str, default='CIFAR10', help='dataset type')  # change to 'MNIST, 'CIFAR10'
+    parser.add_argument('--network_choice', type=str, required=True, choices=['ResNet18', 'ResNet34', 'ResNet50', 'ResNet101'])
     parser.add_argument('--env_name', type=str, default='11st_test', help='experiment name') # save folder name
     parser.add_argument('--mode', type=str, default='train',
                                             choices=['train', 'generate', 'test'], help='train / test / generate')
