@@ -33,7 +33,7 @@ class Solver(object):
 
         self.env_name = args.env_name # experiment name
         self.visdom = args.visdom # I have installed it but don't use it
-        self.ckpt_dir = Path(args.ckpt_dir).joinpath(args.env_name)
+        self.ckpt_dir = Path(args.ckpt_dir)
         if not self.ckpt_dir.exists():
             self.ckpt_dir.mkdir(parents=True, exist_ok=True)
         self.output_dir = Path(args.output_dir).joinpath(args.env_name)
@@ -169,7 +169,6 @@ class Solver(object):
         # please implement last one 'iterative least likely method'
         if self.attack_mode == 'FGSM':
             x_adv, changed, values = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
-            import pdb; pdb.set_trace()
         elif self.attack_mode == 'IterativeLeast':
             x_adv, changed, values = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
         accuracy, cost, accuracy_adv, cost_adv = values
@@ -207,6 +206,52 @@ class Solver(object):
 
         self.set_mode('train')
 
+    def ad_train(self, target=-1, epsilon=0.03, alpha=2/255, iteration=1, lamb=0.3):
+        self.set_mode('train')
+        for e in range(self.epoch):
+            self.global_epoch += 1
+            correct = 0.
+            cost = 0.
+            total = 0.
+            for batch_idx, (images, labels) in enumerate(self.data_loader['train']):
+                self.global_iter += 1
+                self.set_mode('eval')
+                num_clean_image = self.batch_size//2
+
+                x_true = Variable(cuda(images[:num_clean_image], self.cuda))
+                y_true = Variable(cuda(labels[:num_clean_image], self.cuda))
+
+                x = Variable(cuda(images, self.cuda))
+                y = Variable(cuda(labels, self.cuda))
+                if isinstance(target, int) and (target in range(self.y_dim)):
+                    y_target = torch.LongTensor(y_true.size()).fill_(target)
+                else:
+                    y_target = None
+
+                x[:num_clean_image], _, _ = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
+
+                self.set_mode('train')
+                logit = self.net(x)
+                prediction = logit.max(1)[1]
+
+                correct = torch.eq(prediction, y).float().mean().data.item()
+                cost = (F.cross_entropy(logit[num_clean_image:], y[num_clean_image:]) \
+                        + lamb*F.cross_entropy(logit[:num_clean_image], y[:num_clean_image]))*num_clean_image \
+                        /(self.batch_size -(1-lamb)*num_clean_image)
+
+                self.optim.zero_grad()
+                cost.backward()
+                self.optim.step()
+
+                if batch_idx % 100 == 0:
+                    if self.print_:
+                        print()
+                        print(self.env_name)
+                        print('[{:03d}:{:03d}]'.format(self.global_epoch, batch_idx))
+                        print('acc:{:.3f} loss:{:.3f}'.format(correct, cost.data.item()))
+
+            self.test()
+        print(" [*] Training Finished!")
     #sample data which size is batch size
     def sample_data(self):
         data_loader = self.data_loader['test']
@@ -311,10 +356,8 @@ class Solver(object):
             self.global_epoch = checkpoint['epoch']
             self.global_iter = checkpoint['iter']
             self.history = checkpoint['history']
-
             self.net.load_state_dict(checkpoint['model_states']['net'])
             self.optim.load_state_dict(checkpoint['optim_states']['optim'])
-
             print("=> loaded checkpoint '{} (iter {})'".format(file_path, self.global_iter))
 
         else:

@@ -14,16 +14,15 @@ def return_data(args):
     name = args.dataset
     dset_dir = args.dset_dir
     batch_size = args.batch_size
-    transform = transforms.Compose([transforms.ToTensor(),
-                                    transforms.Normalize((0.5,), (0.5,)),
-                                    ])
-
     if 'MNIST' in name:
         print("MNIST dataset used")
         root = os.path.join(dset_dir, 'MNIST')
         train_kwargs = {'root':root, 'train':True, 'transform':transform, 'download':True}
         test_kwargs = {'root':root, 'train':False, 'transform':transform, 'download':True}
         dset = MNIST
+        transform = transforms.Compose([transforms.ToTensor(),
+                                        transforms.Normalize((0.5,), (0.5,)),
+                                        ])
     # I added CIFAR10 loading here
     elif 'CIFAR10' in name:
         print("CIFAR10 dataset used")
@@ -58,7 +57,6 @@ def return_data(args):
                              num_workers=10,
                              pin_memory=True,
                              drop_last=False)
-
     data_loader = dict()
     data_loader['train'] = train_loader
     data_loader['test'] = test_loader

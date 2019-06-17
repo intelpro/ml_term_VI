@@ -27,6 +27,11 @@ def main(args):
                      epsilon=args.epsilon,
                      alpha=args.alpha,
                      iteration=args.iteration)
+    elif args.mode == 'ad_train':
+        solver.ad_train(target=args.target,
+                     epsilon=args.epsilon,
+                     alpha=args.alpha,
+                     iteration=args.iteration)
     elif args.mode == 'universal':
         solver.universal(args)
     else: return
@@ -45,7 +50,7 @@ if __name__ == "__main__":
     parser.add_argument('--summary_dir', type=str, default='summary', help='summary directory path')
     parser.add_argument('--output_dir', type=str, default='output', help='output directory path')
     parser.add_argument('--ckpt_dir', type=str, default='checkpoints', help='checkpoint directory path')
-    parser.add_argument('--load_ckpt', type=str, default='best_acc.tar', help='')
+    parser.add_argument('--load_ckpt', type=str, default='best_accResNet18.tar', help='')
     parser.add_argument('--load_ckpt_flag', type=str2bool, required=True, help='load ckpt flag')
     parser.add_argument('--cuda', type=str2bool, default=True, help='enable cuda')
     parser.add_argument('--silent', type=str2bool, default=False, help='')
@@ -59,7 +64,8 @@ if __name__ == "__main__":
     parser.add_argument('--network_choice', type=str, required=True, choices=['ResNet18', 'ResNet34', 'ResNet50', 'ResNet101'])
     parser.add_argument('--env_name', type=str, default='ResNet_test', help='experiment name') # save folder name
     parser.add_argument('--mode', type=str, default='train',
-                                            choices=['train', 'generate', 'test'], help='train / test / generate')
+                                            choices=['train', 'generate', 'test', 'ad_train'],
+                                            help='train / test / generate / ad_train')
     # change to 100 when you make output figure because the output grid depends on this parameter
     parser.add_argument('--batch_size', type=int, default=100, help='mini-batch size')
     parser.add_argument('--epsilon', type=float, default=0.5, help='epsilon for FGSM and i-FGSM') #change the magnitude of pertubation
