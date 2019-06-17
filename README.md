@@ -1,5 +1,4 @@
 # machine learning term project 
-## FGSM(Fast Gradient Sign Method)
 
 ### Dependencies
 ```
