@@ -55,6 +55,7 @@ class Attack(object):
             cost.backward()
 
             x_adv.grad.sign_()
+            # 부호가 이게 맞는지??? 반대로 아닌지 체크바람.
             x_adv = x_adv - alpha*x_adv.grad
             x_adv = where(x_adv > x+epsilon, x+epsilon, x_adv)
             x_adv = where(x_adv < x-epsilon, x-epsilon, x_adv)
