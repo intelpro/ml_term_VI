@@ -34,10 +34,10 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='toysolver template')
+    parser = argparse.ArgumentParser()
     parser.add_argument('--attack_mode', required=True, type=str, choices=['FGSM', 'IterativeLeast'])
     parser.add_argument('--epoch', type=int, default=30, help='epoch size')
-    parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
+    parser.add_argument('--lr', type=float, default=1e-1, help='learning rate')
     parser.add_argument('--y_dim', type=int, default=10, help='the number of classes')
     parser.add_argument('--target', type=int, default=-1, help='target class for targeted generation')
     parser.add_argument('--eps', type=float, default=1e-9, help='epsilon')
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     #######################################################################################################
     parser.add_argument('--dataset', type=str, default='CIFAR10', help='dataset type')  # change to 'MNIST, 'CIFAR10'
     parser.add_argument('--network_choice', type=str, required=True, choices=['ResNet18', 'ResNet34', 'ResNet50', 'ResNet101'])
-    parser.add_argument('--env_name', type=str, default='11st_test', help='experiment name') # save folder name
+    parser.add_argument('--env_name', type=str, default='ResNet_test', help='experiment name') # save folder name
     parser.add_argument('--mode', type=str, default='train',
                                             choices=['train', 'generate', 'test'], help='train / test / generate')
     # change to 100 when you make output figure because the output grid depends on this parameter

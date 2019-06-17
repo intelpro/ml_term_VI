@@ -33,7 +33,6 @@ class Solver(object):
 
         self.env_name = args.env_name # experiment name
         self.visdom = args.visdom # I have installed it but don't use it
-
         self.ckpt_dir = Path(args.ckpt_dir).joinpath(args.env_name)
         if not self.ckpt_dir.exists():
             self.ckpt_dir.mkdir(parents=True, exist_ok=True)
@@ -53,7 +52,7 @@ class Solver(object):
         # Models & Optimizers
         self.model_init(args)
         self.load_ckpt = args.load_ckpt
-        if args.load_ckpt_flag = True and self.load_ckpt != '':
+        if args.load_ckpt_flag == True and self.load_ckpt != '':
             self.load_checkpoint(self.load_ckpt)
 
         # Adversarial Perturbation Generator
@@ -155,7 +154,7 @@ class Solver(object):
             self.history['acc'] = accuracy
             self.history['epoch'] = self.global_epoch
             self.history['iter'] = self.global_iter
-            self.save_checkpoint('best_acc.tar')
+            self.save_checkpoint('best_acc' + self.args.network_choice +'.tar')
         self.set_mode('train')
 
     def generate(self, target=-1, epsilon=0.03, alpha=2/255, iteration=1):
