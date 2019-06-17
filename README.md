@@ -1,4 +1,5 @@
-# FGSM(Fast Gradient Sign Method)
+# machine learning term project 
+## FGSM(Fast Gradient Sign Method)
 <br>
 
 ### Overview 
@@ -64,4 +65,3 @@ from the left, legitimate examples, perturbed examples, and indication of pertur
 
 [explaining and harnessing adversarial examples, Goodfellow et al.]: https://arxiv.org/abs/1412.6572
 [adversarial examples in the physical world, Kurakin et al.]: http://arxiv.org/abs/1607.02533
-# ml_term_VI
