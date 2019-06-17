@@ -16,11 +16,6 @@ def main(args):
 
     np.set_printoptions(precision=4)
     torch.set_printoptions(precision=4)
-
-    print()
-    print('[ARGUMENTS]')
-    print(args)
-    print()
     net = Solver(args)
 
     if args.mode == 'train':
@@ -61,7 +56,8 @@ if __name__ == "__main__":
     #######################################################################################################
     parser.add_argument('--dataset', type=str, default='CIFAR10', help='dataset type')  # change to 'MNIST, 'CIFAR10'
     parser.add_argument('--env_name', type=str, default='11st_test', help='experiment name') # save folder name
-    parser.add_argument('--mode', type=str, default='train', help='train / test / generate')
+    parser.add_argument('--mode', type=str, default='train',
+                                            choices=['train', 'generate', 'test'], help='train / test / generate')
     # change to 100 when you make output figure because the output grid depends on this parameter
     parser.add_argument('--batch_size', type=int, default=100, help='mini-batch size')
     parser.add_argument('--epsilon', type=float, default=0.5, help='epsilon for FGSM and i-FGSM') #change the magnitude of pertubation

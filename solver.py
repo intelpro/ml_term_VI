@@ -129,11 +129,8 @@ class Solver(object):
             correct += torch.eq(prediction, y).float().sum().data.item()
             cost += F.cross_entropy(logit, y, size_average=False).data.item()
             total += x.size(0)
-
         accuracy = correct / total
         cost /= total
-
-
         if self.print_:
             print()
             print('[{:03d}]\nTEST RESULT'.format(self.global_epoch))
