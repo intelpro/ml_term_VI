@@ -1,4 +1,3 @@
-"""solver.py"""
 from pathlib import Path
 import random
 import numpy as np
@@ -7,7 +6,6 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 from torchvision.utils import save_image
-
 from models.toynet import ToyNet_MNIST
 from models.toynet import ToyNet_CIFAR10 # I added it.
 from datasets.datasets import return_data
@@ -18,7 +16,6 @@ from adversary import Attack
 class Solver(object):
     def __init__(self, args):
         self.args = args
-
         # Basic
         self.cuda = (args.cuda and torch.cuda.is_available())
         self.epoch = args.epoch
@@ -79,7 +76,6 @@ class Solver(object):
             print("CIFAR10")
             self.net = cuda(ToyNet_CIFAR10(y_dim=self.y_dim), self.cuda)
         self.net.weight_init(_type='kaiming')
-
         # Optimizers
         self.optim = optim.Adam([{'params':self.net.parameters(), 'lr':self.lr}],
                                 betas=(0.5, 0.999))
@@ -88,7 +84,6 @@ class Solver(object):
         self.set_mode('train')
         for e in range(self.epoch):
             self.global_epoch += 1
-
             correct = 0.
             cost = 0.
             total = 0.
@@ -115,19 +110,14 @@ class Solver(object):
                         print(self.env_name)
                         print('[{:03d}:{:03d}]'.format(self.global_epoch, batch_idx))
                         print('acc:{:.3f} loss:{:.3f}'.format(correct, cost.data.item()))
-
             self.test()
-
-
         print(" [*] Training Finished!")
 
     def test(self):
         self.set_mode('eval')
-
         correct = 0.
         cost = 0.
         total = 0.
-
         data_loader = self.data_loader['test']
         for batch_idx, (images, labels) in enumerate(data_loader):
             x = Variable(cuda(images, self.cuda))
@@ -157,7 +147,6 @@ class Solver(object):
             self.history['epoch'] = self.global_epoch
             self.history['iter'] = self.global_iter
             self.save_checkpoint('best_acc.tar')
-
         self.set_mode('train')
 
     def generate(self, target=-1, epsilon=0.03, alpha=2/255, iteration=1):
@@ -218,7 +207,6 @@ class Solver(object):
     # Key point
     def FGSM(self, x, y_true, y_target=None, eps=0.03, alpha=2/255, iteration=1):
         self.set_mode('eval')
-
         x = Variable(cuda(x, self.cuda), requires_grad=True)
         y_true = Variable(cuda(y_true, self.cuda), requires_grad=False)
 
