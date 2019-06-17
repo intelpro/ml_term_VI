@@ -6,9 +6,6 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 from torchvision.utils import save_image
-
-from models.toynet import ToyNet_MNIST
-from models.toynet import ToyNet_CIFAR10
 from datasets.datasets import return_data
 from utils.utils import cuda, where
 
@@ -52,6 +49,7 @@ class Attack(object):
                 cost = -self.criterion(h_adv, y)
 
             self.net.zero_grad()
+
             if x_adv.grad is not None:
                 x_adv.grad.data.fill_(0)
             cost.backward()
@@ -68,44 +66,21 @@ class Attack(object):
 
         return x_adv, h_adv, h
 
-    def ll_fgsm(self, x, y, targeted=False, epsilon=0.03, x_val_min=-1, x_val_max=1):
-        x_adv = Variable(x.data, requires_grad=True)
-        h_adv = self.net(x_adv)
-        y = np.argmin()
-        if targeted:
-            cost = self.criterion(h_adv, y)
-        else:
-            cost = -self.criterion(h_adv, y)
-
-        self.net.zero_grad()
-        if x_adv.grad is not None:
-            x_adv.grad.data.fill_(0)
-        cost.backward()
-
-        x_adv.grad.sign_()
-        x_adv = x_adv - epsilon*x_adv.grad
-        x_adv = torch.clamp(x_adv, x_val_min, x_val_max)
-
-
-        h = self.net(x)
-        h_adv = self.net(x_adv)
-
-        return x_adv, h_adv, h
-
-    def i_ll_fgsm(self, x, y, targeted=False, epsilon=0.03, alpha=1, iteration=1, x_val_min=-1, x_val_max=1):
+    def IterativeLeastlikely(self, x, y, targeted=False, epsilon=0.03, alpha=1, iteration=1, x_val_min=-1, x_val_max=1):
         x_adv = Variable(x.data, requires_grad=True)
         for i in range(iteration):
             h_adv = self.net(x_adv)
-            if targeted:
-                cost = self.criterion(h_adv, y)
-            else:
-                cost = -self.criterion(h_adv, y)
+            net_pred = torch.argsort(h_adv, dim=1)
+            target_idx = net_pred.shape[1]-1
+            y_ll = net_pred[:,0]
+            cost = self.criterion(h_adv, y_ll)
 
             self.net.zero_grad()
+
             if x_adv.grad is not None:
                 x_adv.grad.data.fill_(0)
             cost.backward()
-
+            
             x_adv.grad.sign_()
             x_adv = x_adv - alpha*x_adv.grad
             x_adv = where(x_adv > x+epsilon, x+epsilon, x_adv)
@@ -115,8 +90,8 @@ class Attack(object):
 
         h = self.net(x)
         h_adv = self.net(x_adv)
-
         return x_adv, h_adv, h
+
 
     def universal(self, args):
         self.set_mode('eval')

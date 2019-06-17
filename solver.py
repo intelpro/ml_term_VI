@@ -61,7 +61,7 @@ class Solver(object):
         self.attack_mode = args.attack_mode
         if self.attack_mode == 'FGSM':
             self.attack = Attack(self.net, criterion=criterion)
-        elif self.attack_mode == 'IterativeLeast':
+        elif self.attack_mode == 'ILLC':
             self.attack = Attack(self.net, criterion=criterion)
 
     def visualization_init(self, args):
@@ -169,8 +169,8 @@ class Solver(object):
         # please implement last one 'iterative least likely method'
         if self.attack_mode == 'FGSM':
             x_adv, changed, values = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
-        elif self.attack_mode == 'IterativeLeast':
-            x_adv, changed, values = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
+        elif self.attack_mode == 'ILLC':
+            x_adv, changed, values = self.IterativeLeastlikely(x_true, y_true, y_target, epsilon, alpha, iteration)
         accuracy, cost, accuracy_adv, cost_adv = values
 
         # save the result image, you can find in outputs/experiment_name
@@ -216,10 +216,10 @@ class Solver(object):
             for batch_idx, (images, labels) in enumerate(self.data_loader['train']):
                 self.global_iter += 1
                 self.set_mode('eval')
-                num_clean_image = self.batch_size//2
+                num_adv_image = self.batch_size//2
 
-                x_true = Variable(cuda(images[:num_clean_image], self.cuda))
-                y_true = Variable(cuda(labels[:num_clean_image], self.cuda))
+                x_true = Variable(cuda(images[:num_adv_image], self.cuda))
+                y_true = Variable(cuda(labels[:num_adv_image], self.cuda))
 
                 x = Variable(cuda(images, self.cuda))
                 y = Variable(cuda(labels, self.cuda))
@@ -228,16 +228,19 @@ class Solver(object):
                 else:
                     y_target = None
 
-                x[:num_clean_image], _, _ = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
+                if self.attack_mode == 'FGSM':
+                    x[:num_adv_image], _, _ = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
+                elif self.attack_mode == 'ILLC':
+                    x[:num_adv_image], _, _ = self.IterativeLeastlikely(x_true, y_true, y_target, epsilon, alpha, iteration)
 
                 self.set_mode('train')
                 logit = self.net(x)
                 prediction = logit.max(1)[1]
 
                 correct = torch.eq(prediction, y).float().mean().data.item()
-                cost = (F.cross_entropy(logit[num_clean_image:], y[num_clean_image:]) \
-                        + lamb*F.cross_entropy(logit[:num_clean_image], y[:num_clean_image]))*num_clean_image \
-                        /(self.batch_size -(1-lamb)*num_clean_image)
+                cost = (F.cross_entropy(logit[num_adv_image:], y[num_adv_image:]) \
+                        + lamb*F.cross_entropy(logit[:num_adv_image], y[:num_adv_image]))*num_adv_image \
+                        /(self.batch_size -(1-lamb)*num_adv_image)
 
                 self.optim.zero_grad()
                 cost.backward()
@@ -261,12 +264,75 @@ class Solver(object):
             break
         return x_true, y_true
 
+    def IterativeLeastlikely(self, x, y_true, y_target=None, eps=0.03, alpha=2/255, iteration=1):
+        self.set_mode('eval')
+        x = Variable(cuda(x, self.cuda), requires_grad=True)
+        y_true = Variable(cuda(y_true, self.cuda), requires_grad=False)
+
+        if y_target is not None:
+            targeted = True
+            y_target = Variable(cuda(y_target, self.cuda), requires_grad=False)
+        else:
+            targeted = False
+
+        # original image classification
+        h = self.net(x)
+        prediction = h.max(1)[1]
+        accuracy = torch.eq(prediction, y_true).float().mean()
+
+        cost = F.cross_entropy(h, y_true)
+
+        # adversarial image classification
+        if iteration == 1:
+            if targeted:
+                x_adv, h_adv, h = self.attack.IterativeLeastlikely(x, y_target, True, eps)
+            else:
+                x_adv, h_adv, h = self.attack.IterativeLeastlikely(x, y_true, False, eps)
+        else:
+            if targeted:
+                x_adv, h_adv, h = self.attack.IterativeLeastlikely(x, y_target, True, eps, alpha, iteration)
+            else:
+                x_adv, h_adv, h = self.attack.IterativeLeastlikely(x, y_true, False, eps, alpha, iteration)
+
+        prediction_adv = h_adv.max(1)[1]
+        accuracy_adv = torch.eq(prediction_adv, y_true).float().mean()
+        cost_adv = F.cross_entropy(h_adv, y_true)
+
+        # make indication of perturbed images that changed predictions of the classifier
+        # it draw green and red boxes
+        if targeted:
+            changed = torch.eq(y_target, prediction_adv)
+        else:
+            changed = torch.eq(prediction, prediction_adv)
+            changed = torch.eq(changed, 0)
+
+        if self.dataset == 'MNIST':
+            changed = changed.float().view(-1, 1, 1, 1).repeat(1, 3, 28, 28)
+        elif self.dataset =='CIFAR10':
+            changed = changed.float().view(-1, 1, 1, 1).repeat(1, 3, 32, 32)
+
+        #fill the grid with color
+        changed[:, 0, :, :] = where(changed[:, 0, :, :] == 1, 252, 91)
+        changed[:, 1, :, :] = where(changed[:, 1, :, :] == 1, 39, 252)
+        changed[:, 2, :, :] = where(changed[:, 2, :, :] == 1, 25, 25)
+        changed = self.scale(changed/255)
+
+        #fil the inner part of grid with image
+        if self.dataset =='MNIST':
+            changed[:, :, 3:-2, 3:-2] = x_adv.repeat(1, 3, 1, 1)[:, :, 3:-2, 3:-2]
+        elif self.dataset =='CIFAR10':
+            changed[:, :, 3:-2, 3:-2] = x_adv[:,:,3:-2,3:-2]
+
+        self.set_mode('train')
+
+        return x_adv.data, changed.data,\
+                (accuracy.data.item(), cost.data.item(), accuracy_adv.data.item(), cost_adv.data.item())
+
     # Key point
     def FGSM(self, x, y_true, y_target=None, eps=0.03, alpha=2/255, iteration=1):
         self.set_mode('eval')
         x = Variable(cuda(x, self.cuda), requires_grad=True)
         y_true = Variable(cuda(y_true, self.cuda), requires_grad=False)
-
 
         if y_target is not None:
             targeted = True
