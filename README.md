@@ -4,11 +4,14 @@
 ### Dependencies
 ```
 python 3.6.4
-pytorch 0.3.1.post2
-visdom(optional)
-tensorboardX(optional)
-tensorflow(optional)
+pytorch 1.0.1 post2
 ```
+
+### 해야할것 
+1. 그래프 그리기(train loss function, acc, test acc 등등)  
+2. 결과분석  
+3. 여러 모델에 대한 실험결과(망 깊이 등등..?)  
+4. 추가적인 attack 방법?(optinal)
 
 ### Usage
 1. train a simple MNIST classifier

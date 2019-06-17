@@ -1,5 +1,4 @@
 from pathlib import Path
-
 import torch
 import numpy as np
 import torch.optim as optim
@@ -72,8 +71,8 @@ class Attack(object):
         for i in range(iteration):
             h_adv = self.net(x_adv)
             net_pred = torch.argsort(h_adv, dim=1)
-            target_idx = net_pred.shape[1]-1
-            y_ll = net_pred[:,0]
+            target_idx = 0
+            y_ll = net_pred[:,target_idx]
             cost = self.criterion(h_adv, y_ll)
 
             self.net.zero_grad()
