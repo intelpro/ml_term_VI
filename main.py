@@ -32,10 +32,9 @@ def main(args):
                      epsilon=args.epsilon,
                      alpha=args.alpha,
                      iteration=args.iteration)
-    elif argsdeepsdddddfffddd.mode == 'universal':
+    elif args.mode == 'universal':
         net.universal(args)
     else: return
-
     print('[*] Finished')
 
 
