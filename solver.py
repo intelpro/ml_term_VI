@@ -173,7 +173,7 @@ class Solver(object):
         self.set_mode('train')
         return accuracy
 
-    def generate(self, target=-1, epsilon=0.03, alpha=2/255, iteration=1):
+    def generate(self, target, epsilon, alpha iteration):
         self.set_mode('eval')
         x_true, y_true = self.sample_data() # take sample which size is batch_size
         if isinstance(target, int) and (target in range(self.y_dim)):
@@ -222,7 +222,7 @@ class Solver(object):
 
         self.set_mode('train')
 
-    def ad_train(self, target=-1, epsilon=0.03, alpha=2/255, iteration=1, lamb=0.3):
+    def ad_train(self, target, epsilon, alpha, iteration, lamb):
         self.set_mode('train')
         acc_train_plt = []
         acc_test_plt = []
@@ -237,6 +237,7 @@ class Solver(object):
             total = 0.
             for batch_idx, (images, labels) in enumerate(self.data_loader['train']):
                 self.global_iter += 1
+                local_iter += 1
                 self.set_mode('eval')
                 num_adv_image = self.batch_size//2
 
@@ -498,7 +499,7 @@ class Solver(object):
         ax1.tick_params(axis='y')
         color = 'tab:red'
         ax2 = ax1.twinx()
-        ax2.plot(epoch, loss_plt, linestyle="--", label='train_loss', color=color, label='loss')
+        ax2.plot(epoch, loss_plt, linestyle="--", label='train_loss', color=color)
         ax2.set_ylabel('loss', color=color)
         ax2.tick_params(axis='y', labelcolor=color)
         plt.legend(loc='upper left')
