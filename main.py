@@ -33,8 +33,11 @@ def main(args):
                      alpha=args.alpha,
                      iteration=args.iteration,
                      lamb=0.3)
-    elif args.mode == 'universal':
-        solver.universal(args)
+    elif args.mode == 'ad_test': #adversarial image test
+        solver.ad_test(target=args.target,
+                     epsilon=args.epsilon,
+                     alpha=args.alpha,
+                     iteration=args.iteration)
     else: return
     print('[*] Finished')
 
@@ -43,7 +46,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--attack_mode', required=True, type=str, choices=['FGSM', 'ILLC'])
     parser.add_argument('--epoch', type=int, default=30, help='epoch size')
-    parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
+    parser.add_argument('--lr', type=float, default=5e-4, help='learning rate')
     parser.add_argument('--y_dim', type=int, default=10, help='the number of classes')
     parser.add_argument('--target', type=int, default=-1, help='target class for targeted generation')
     parser.add_argument('--dset_dir', type=str, default='datasets', help='dataset directory path')
@@ -64,11 +67,11 @@ if __name__ == "__main__":
     parser.add_argument('--network_choice', type=str, required=True, choices=['ToyNet', 'ResNet18', 'ResNet34', 'ResNet50', 'ResNet101'])
     parser.add_argument('--env_name', type=str, default='ResNet_test', help='experiment name') # save folder name
     parser.add_argument('--mode', type=str, default='train',
-                                            choices=['train', 'generate', 'test', 'ad_train'],
+                                            choices=['train', 'generate', 'test', 'ad_train', 'ad_test'],
                                             help='train / test / generate / ad_train')
     # change to 100 when you make output figure because the output grid depends on this parameter
     parser.add_argument('--batch_size', type=int, default=100, help='mini-batch size')
-    parser.add_argument('--epsilon', type=float, default=0.5, help='epsilon for FGSM and i-FGSM') #change the magnitude of pertubation
+    parser.add_argument('--epsilon', type=float, default=128/255, help='epsilon for FGSM and i-FGSM') #change the magnitude of pertubation
     #######################################################################################################
     args = parser.parse_args()
     main(args)

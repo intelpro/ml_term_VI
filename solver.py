@@ -290,6 +290,39 @@ class Solver(object):
             self.test()
         print(" [*] Training Finished!")
         self.plot_result(acc_train_plt, acc_test_plt, loss_plt)
+
+    def ad_test(self, target, epsilon, alpha, iteration):
+        self.set_mode('eval')
+        correct = 0.
+        cost = 0.
+        total = 0.
+        data_loader = self.data_loader['test']
+        for batch_idx, (images, labels) in enumerate(data_loader):
+            x_true = Variable(cuda(images, self.cuda))
+            y_true = Variable(cuda(labels, self.cuda))
+
+            if isinstance(target, int) and (target in range(self.y_dim)):
+                y_target = torch.LongTensor(y_true.size()).fill_(target)
+            else:
+                y_target = None
+
+            if self.attack_mode == 'FGSM':
+                x, _, _ = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
+            elif self.attack_mode == 'ILLC':
+                x, _, _ = self.IterativeLeastlikely(x_true, y_true, y_target, epsilon, alpha, iteration)
+
+            logit = self.net(x)
+            prediction = logit.max(1)[1]
+
+            correct += torch.eq(prediction, y_true).float().sum().data.item()
+            cost += F.cross_entropy(logit, y_true, size_average=False).data.item()
+
+            total += x.size(0)
+        accuracy = correct / total
+        cost /= total
+        print('ACC:{:.4f}'.format(accuracy))
+        self.set_mode('train')
+
     #sample data which size is batch size
     def sample_data(self):
         data_loader = self.data_loader['test']

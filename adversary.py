@@ -82,7 +82,6 @@ class Attack(object):
             eps = eps / 255
             clamp_max = clamp_max / 255
             
-        print('iteration' + str(iters))
         for i in range(iters) :    
             images.requires_grad = True
             outputs = self.net(images)
