@@ -265,7 +265,7 @@ class Solver(object):
                 if self.attack_mode == 'FGSM':
                     x[:num_adv_image], _, _ = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
                 elif self.attack_mode == 'ILLC':
-                    x[:num_adv_image], _, _ = self.IterativeLeastlikely(x_true, y_true, y_target, epsilon, alpha, iteration)
+                    x[:num_adv_image], _, _ = self.ILLC(x_true, y_true, y_target, epsilon, alpha, iteration)
 
                 self.set_mode('train')
                 logit = self.net(x)
@@ -316,7 +316,7 @@ class Solver(object):
             if self.attack_mode == 'FGSM':
                 x, _, _ = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
             elif self.attack_mode == 'ILLC':
-                x, _, _ = self.IterativeLeastlikely(x_true, y_true, y_target, epsilon, alpha, iteration)
+                x, _, _ = self.ILLC(x_true, y_true, y_target, epsilon, alpha, iteration)
 
             logit = self.net(x)
             prediction = logit.max(1)[1]
