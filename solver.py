@@ -496,11 +496,11 @@ class Solver(object):
         ax1.set_xlabel('epoch')
         ax1.set_ylabel('accuracy')
         ax1.tick_params(axis='y')
-        plt.legend(loc='upper left')
         color = 'tab:red'
         ax2 = ax1.twinx()
-        ax2.plot(epoch, loss_plt, linestyle="--", color=color, label='loss')
+        ax2.plot(epoch, loss_plt, linestyle="--", label='train_loss', color=color, label='loss')
         ax2.set_ylabel('loss', color=color)
         ax2.tick_params(axis='y', labelcolor=color)
+        plt.legend(loc='upper left')
         plt.title("{}".format(self.env_name))
         plt.savefig('{}/{}/{}.png'.format(self.args.output_dir, self.env_name,title), dpi=350)
