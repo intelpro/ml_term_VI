@@ -23,7 +23,6 @@ class Solver(object):
         self.cuda = (args.cuda and torch.cuda.is_available())
         self.epoch = args.epoch
         self.batch_size = args.batch_size
-        self.eps = args.eps
         self.lr = args.lr
         self.y_dim = args.y_dim # MNIST and CIFAR10 have class 10
         self.target = args.target # if you want to give pertubation to specific class then use it
@@ -35,11 +34,16 @@ class Solver(object):
         self.env_name = args.env_name # experiment name
         self.visdom = args.visdom # I have installed it but don't use it
         self.ckpt_dir = Path(args.ckpt_dir)
+        self.save_ckpt_dir = Path('./checkpoints/' + args.env_name)
+        print(self.save_ckpt_dir)
         if not self.ckpt_dir.exists():
             self.ckpt_dir.mkdir(parents=True, exist_ok=True)
+        if not self.save_ckpt_dir.exists():
+            self.save_ckpt_dir.mkdir(parents=True, exist_ok=True)
         self.output_dir = Path(args.output_dir).joinpath(args.env_name)
         if not self.output_dir.exists():
             self.output_dir.mkdir(parents=True, exist_ok=True)
+
 
         # Visualization Tools
         self.visualization_init(args)
@@ -169,7 +173,7 @@ class Solver(object):
             self.history['acc'] = accuracy
             self.history['epoch'] = self.global_epoch
             self.history['iter'] = self.global_iter
-            self.save_checkpoint('best_acc' + self.args.network_choice +'.tar')
+            self.save_checkpoint('best_acc.tar')
         self.set_mode('train')
         return accuracy
 
@@ -441,7 +445,7 @@ class Solver(object):
             'optim_states':optim_states,
             }
 
-        file_path = self.ckpt_dir / filename
+        file_path = self.save_ckpt_dir / filename
         print(file_path)
         torch.save(states, file_path.open('wb+'))
         print("=> saved checkpoint '{}' (iter {})".format(file_path, self.global_iter))

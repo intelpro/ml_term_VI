@@ -43,15 +43,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--attack_mode', required=True, type=str, choices=['FGSM', 'ILLC'])
     parser.add_argument('--epoch', type=int, default=30, help='epoch size')
-    parser.add_argument('--lr', type=float, default=1e-1, help='learning rate')
+    parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--y_dim', type=int, default=10, help='the number of classes')
     parser.add_argument('--target', type=int, default=-1, help='target class for targeted generation')
-    parser.add_argument('--eps', type=float, default=1e-9, help='epsilon')
     parser.add_argument('--dset_dir', type=str, default='datasets', help='dataset directory path')
     parser.add_argument('--summary_dir', type=str, default='summary', help='summary directory path')
     parser.add_argument('--output_dir', type=str, default='output', help='output directory path')
     parser.add_argument('--ckpt_dir', type=str, default='checkpoints', help='checkpoint directory path')
-    parser.add_argument('--load_ckpt', type=str, default='best_accResNet18.tar', help='')
+    parser.add_argument('--load_ckpt', type=str, default='best_acc.tar', help='')
     parser.add_argument('--load_ckpt_flag', type=str2bool, required=True, help='load ckpt flag')
     parser.add_argument('--cuda', type=str2bool, default=True, help='enable cuda')
     parser.add_argument('--silent', type=str2bool, default=False, help='')
@@ -62,7 +61,7 @@ if __name__ == "__main__":
     parser.add_argument('--visdom_port', type=str, default=55558, help='visdom port')
     #######################################################################################################
     parser.add_argument('--dataset', type=str, default='CIFAR10', help='dataset type')  # change to 'MNIST, 'CIFAR10'
-    parser.add_argument('--network_choice', type=str, required=True, choices=['ResNet18', 'ResNet34', 'ResNet50', 'ResNet101'])
+    parser.add_argument('--network_choice', type=str, required=True, choices=['ToyNet', 'ResNet18', 'ResNet34', 'ResNet50', 'ResNet101'])
     parser.add_argument('--env_name', type=str, default='ResNet_test', help='experiment name') # save folder name
     parser.add_argument('--mode', type=str, default='train',
                                             choices=['train', 'generate', 'test', 'ad_train'],
