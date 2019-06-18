@@ -55,7 +55,7 @@ if __name__ == "__main__":
     parser.add_argument('--cuda', type=str2bool, default=True, help='enable cuda')
     parser.add_argument('--silent', type=str2bool, default=False, help='')
     parser.add_argument('--seed', type=int, default=1, help='random seed')
-    parser.add_argument('--iteration', type=int, default=100, help='the number of iteration for FGSM')
+    parser.add_argument('--iteration', type=int, default=1, help='the number of iteration for FGSM')
     parser.add_argument('--alpha', type=float, default=2/255, help='alpha for i-FGSM')
     parser.add_argument('--visdom', type=str2bool, default=False, help='enable visdom')
     parser.add_argument('--visdom_port', type=str, default=55558, help='visdom port')

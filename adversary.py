@@ -35,8 +35,10 @@ class Attack(object):
 
         h = self.net(x)
         h_adv = self.net(x_adv)
+        with torch.no_grad():
+            adv_noise = x - x_adv
 
-        return x_adv, h_adv, h
+        return x_adv, h_adv, h, adv_noise
 
     def i_fgsm(self, x, y, targeted=False, epsilon=0.03, alpha=1, iteration=1, x_val_min=-1, x_val_max=1):
         x_adv = Variable(x.data, requires_grad=True)
@@ -71,9 +73,12 @@ class Attack(object):
         for i in range(iteration):
             h_adv = self.net(x_adv)
             net_pred = torch.argsort(h_adv, dim=1)
-            target_idx = 0
+            target_idx = 0 
             y_ll = net_pred[:,target_idx]
-            cost = self.criterion(h_adv, y_ll)
+            if targeted:
+                cost = self.criterion(h_adv, y_ll)
+            else:
+                cost = self.criterion(h_adv, y_ll)
 
             self.net.zero_grad()
 
@@ -90,7 +95,9 @@ class Attack(object):
 
         h = self.net(x)
         h_adv = self.net(x_adv)
-        return x_adv, h_adv, h
+        with torch.no_grad():
+            adv_noise = x_adv - x
+        return x_adv, h_adv, h, adv_noise
 
 
     def universal(self, args):

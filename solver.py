@@ -1,6 +1,7 @@
 from pathlib import Path
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
@@ -12,6 +13,7 @@ from models.resnet import ResNet18, ResNet34, ResNet50, ResNet101
 from datasets.datasets import return_data
 from utils.utils import cuda, where
 from adversary import Attack
+from torchvision import transforms
 
 # this class include triain/test/generate
 class Solver(object):
@@ -30,7 +32,6 @@ class Solver(object):
         self.global_epoch = 0
         self.global_iter = 0
         self.print_ = not args.silent
-
         self.env_name = args.env_name # experiment name
         self.visdom = args.visdom # I have installed it but don't use it
         self.ckpt_dir = Path(args.ckpt_dir)
@@ -93,13 +94,20 @@ class Solver(object):
 
     def train(self):
         self.set_mode('train')
+        acc_train_plt = []
+        loss_plt = []
+        acc_test_plt = []
         for e in range(self.epoch):
             self.global_epoch += 1
+            local_iter = 0 
             correct = 0.
             cost = 0.
             total = 0.
+            total_acc = 0.
+            total_loss = 0.
             for batch_idx, (images, labels) in enumerate(self.data_loader['train']):
                 self.global_iter += 1
+                local_iter += 1
                 #print("image size is ", np.shape(images))
 
                 x = Variable(cuda(images, self.cuda))
@@ -110,6 +118,8 @@ class Solver(object):
 
                 correct = torch.eq(prediction, y).float().mean().data.item()
                 cost = F.cross_entropy(logit, y)
+                total_acc += correct
+                total_loss += cost.data.item()
 
                 self.optim.zero_grad()
                 cost.backward()
@@ -121,8 +131,13 @@ class Solver(object):
                         print(self.env_name)
                         print('[{:03d}:{:03d}]'.format(self.global_epoch, batch_idx))
                         print('acc:{:.3f} loss:{:.3f}'.format(correct, cost.data.item()))
-            self.test()
+            total_acc = total_acc / local_iter
+            total_loss = total_loss/local_iter
+            acc_train_plt.append(total_acc)
+            loss_plt.append(total_loss)
+            acc_test_plt.append(self.test())
         print(" [*] Training Finished!")
+        self.plot_result(acc_train_plt, acc_test_plt, loss_plt)
 
     def test(self):
         self.set_mode('eval')
@@ -156,6 +171,7 @@ class Solver(object):
             self.history['iter'] = self.global_iter
             self.save_checkpoint('best_acc' + self.args.network_choice +'.tar')
         self.set_mode('train')
+        return accuracy
 
     def generate(self, target=-1, epsilon=0.03, alpha=2/255, iteration=1):
         self.set_mode('eval')
@@ -208,10 +224,16 @@ class Solver(object):
 
     def ad_train(self, target=-1, epsilon=0.03, alpha=2/255, iteration=1, lamb=0.3):
         self.set_mode('train')
+        acc_train_plt = []
+        acc_test_plt = []
+        loss_plt = []
         for e in range(self.epoch):
             self.global_epoch += 1
+            local_iter = 0 
             correct = 0.
             cost = 0.
+            total_acc = 0.
+            total_loss = 0.
             total = 0.
             for batch_idx, (images, labels) in enumerate(self.data_loader['train']):
                 self.global_iter += 1
@@ -242,6 +264,8 @@ class Solver(object):
                         + lamb*F.cross_entropy(logit[:num_adv_image], y[:num_adv_image]))*num_adv_image \
                         /(self.batch_size -(1-lamb)*num_adv_image)
 
+                total_acc += correct
+                total_loss += cost.data.item()
                 self.optim.zero_grad()
                 cost.backward()
                 self.optim.step()
@@ -253,8 +277,14 @@ class Solver(object):
                         print('[{:03d}:{:03d}]'.format(self.global_epoch, batch_idx))
                         print('acc:{:.3f} loss:{:.3f}'.format(correct, cost.data.item()))
 
+            total_acc = total_acc / local_iter
+            total_loss = total_loss / local_iter
+            acc_train_plt.append(total_acc)
+            loss_plt.append(total_loss)
+            acc_test_plt.append(self.test())
             self.test()
         print(" [*] Training Finished!")
+        self.plot_result(acc_train_plt, acc_test_plt, loss_plt)
     #sample data which size is batch size
     def sample_data(self):
         data_loader = self.data_loader['test']
@@ -290,9 +320,9 @@ class Solver(object):
                 x_adv, h_adv, h = self.attack.IterativeLeastlikely(x, y_true, False, eps)
         else:
             if targeted:
-                x_adv, h_adv, h = self.attack.IterativeLeastlikely(x, y_target, True, eps, alpha, iteration)
+                x_adv, h_adv, h, adv_noise = self.attack.IterativeLeastlikely(x, y_target, True, eps, alpha, iteration)
             else:
-                x_adv, h_adv, h = self.attack.IterativeLeastlikely(x, y_true, False, eps, alpha, iteration)
+                x_adv, h_adv, h, adv_noise = self.attack.IterativeLeastlikely(x, y_true, False, eps, alpha, iteration)
 
         prediction_adv = h_adv.max(1)[1]
         accuracy_adv = torch.eq(prediction_adv, y_true).float().mean()
@@ -350,9 +380,17 @@ class Solver(object):
         # adversarial image classification
         if iteration == 1:
             if targeted:
-                x_adv, h_adv, h = self.attack.fgsm(x, y_target, True, eps)
+                x_adv, h_adv, h, adv_noise = self.attack.fgsm(x, y_target, True, eps)
             else:
-                x_adv, h_adv, h = self.attack.fgsm(x, y_true, False, eps)
+                x_adv, h_adv, h,adv_noise = self.attack.fgsm(x, y_true, False, eps)
+            """
+                adv_cpu = self.convert_torch2numpy(adv_noise)
+                x_cpu = self.convert_torch2numpy(x)
+                self.plot_img(adv_cpu,2,'adversarial noise')
+                self.plot_img(x_cpu,2,'original image')
+                plt.show()
+                import pdb; pdb.set_trace()
+                """
         else:
             if targeted:
                 x_adv, h_adv, h = self.attack.i_fgsm(x, y_target, True, eps, alpha, iteration)
@@ -439,3 +477,30 @@ class Solver(object):
     # change 0~1 to -1~1 zero centered
     def scale(self, image):
         return image.mul(2).add(-1)
+    
+    def convert_torch2numpy(self, torch_img):
+        np_img = np.transpose(torch_img.data.cpu().numpy(), (0,2,3,1))
+        # PIL_image = transforms.ToPILImage()(transforms.ToTensor()(np_img),interpolation="bicubic")
+        return np_img
+
+    def plot_img(self, np_img, idx, title):
+        plt.figure()
+        plt.title(title)
+        plt.imshow(np_img[idx], interpolation='nearest')
+
+    def plot_result(self, acc_train_plt, acc_test_plt, loss_plt, title='train_graph'):
+        epoch = range(0, self.epoch)
+        fig, ax1 = plt.subplots()
+        ax1.plot(epoch, acc_train_plt, label='train_acc')
+        ax1.plot(epoch, acc_test_plt, label='test_acc')
+        ax1.set_xlabel('epoch')
+        ax1.set_ylabel('accuracy')
+        ax1.tick_params(axis='y')
+        plt.legend(loc='upper left')
+        color = 'tab:red'
+        ax2 = ax1.twinx()
+        ax2.plot(epoch, loss_plt, linestyle="--", color=color, label='loss')
+        ax2.set_ylabel('loss', color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
+        plt.title("{}".format(self.env_name))
+        plt.savefig('{}/{}/{}.png'.format(self.args.output_dir, self.env_name,title), dpi=350)

@@ -41,6 +41,7 @@ def return_data(args):
         ])
         train_kwargs = {'root':root, 'train':True, 'transform':transform_train, 'download':True}
         test_kwargs = {'root':root, 'train':False, 'transform': transform_test, 'download': True}
+
     else:
         raise UnknownDatasetError()
     train_data = dset(**train_kwargs)
