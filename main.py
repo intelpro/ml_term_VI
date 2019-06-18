@@ -29,7 +29,6 @@ def main(args):
                      iteration=args.iteration)
     elif args.mode == 'ad_train':
         solver.ad_train(target=args.target,
-                     epsilon=args.epsilon,
                      alpha=args.alpha,
                      iteration=args.iteration,
                      lamb=0.3)

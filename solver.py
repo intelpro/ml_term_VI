@@ -226,7 +226,7 @@ class Solver(object):
 
         self.set_mode('train')
 
-    def ad_train(self, target, epsilon, alpha, iteration, lamb):
+    def ad_train(self, target, alpha, iteration, lamb):
         self.set_mode('train')
         acc_train_plt = [0]
         acc_test_plt = [0]
@@ -243,6 +243,8 @@ class Solver(object):
                 self.global_iter += 1
                 local_iter += 1
                 self.set_mode('eval')
+
+
                 num_adv_image = self.batch_size//2
 
                 x_true = Variable(cuda(images[:num_adv_image], self.cuda))
@@ -250,15 +252,20 @@ class Solver(object):
 
                 x = Variable(cuda(images, self.cuda))
                 y = Variable(cuda(labels, self.cuda))
+
                 if isinstance(target, int) and (target in range(self.y_dim)):
                     y_target = torch.LongTensor(y_true.size()).fill_(target)
                 else:
                     y_target = None
 
+                epsilon = abs(np.random.normal(0, 8 / 255))
+                if epsilon > 16 / 255:
+                    epsilon = 0
+
                 if self.attack_mode == 'FGSM':
                     x[:num_adv_image], _, _ = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
                 elif self.attack_mode == 'ILLC':
-                    x[:num_adv_image], _, _ = self.ILLC(x_true, y_true, y_target, epsilon, alpha, iteration)
+                    x[:num_adv_image], _, _ = self.IterativeLeastlikely(x_true, y_true, y_target, epsilon, alpha, iteration)
 
                 self.set_mode('train')
                 logit = self.net(x)
@@ -289,7 +296,7 @@ class Solver(object):
             acc_test_plt.append(self.test())
             self.test()
         print(" [*] Training Finished!")
-        self.plot_result(acc_train_plt, acc_test_plt, loss_plt)
+        self.plot_result(acc_train_plt, acc_test_plt, loss_plt, self.history['acc'])
 
     def ad_test(self, target, epsilon, alpha, iteration):
         self.set_mode('eval')
