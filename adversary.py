@@ -56,7 +56,6 @@ class Attack(object):
             cost.backward()
 
             x_adv.grad.sign_()
-            # 부호가 이게 맞는지??? 반대로 아닌지 체크바람.
             x_adv = x_adv - alpha*x_adv.grad
             x_adv = where(x_adv > x+epsilon, x+epsilon, x_adv)
             x_adv = where(x_adv < x-epsilon, x-epsilon, x_adv)
@@ -68,18 +67,53 @@ class Attack(object):
 
         return x_adv, h_adv, h
 
-    def IterativeLeastlikely(self, x, y, targeted=False, epsilon=0.03, alpha=1, iteration=1, x_val_min=-1, x_val_max=1):
+    def IterativeLeastlikely(self,images, y, targeted=False, eps=0.03, alpha=1, iters=1, x_val_min=-1, x_val_max=1):
+        output = self.net(images)
+        _, labels = torch.min(output.data, 1)
+        labels = labels.detach_()
+            
+        clamp_max = 255
+
+        # The paper said min(eps + 4, 1.25*eps) is used as iterations
+        iters = int(min(255*eps + 4, 255*1.25*eps))
+            
+        scale = 0 
+        if scale:
+            eps = eps / 255
+            clamp_max = clamp_max / 255
+            
+        print('iteration' + str(iters))
+        for i in range(iters) :    
+            images.requires_grad = True
+            outputs = self.net(images)
+
+            self.net.zero_grad()
+            cost = self.criterion(outputs, labels)
+            cost.backward()
+
+            attack_images = images - alpha*images.grad.sign()
+            
+            a = torch.clamp(images - eps, min=0)
+            b = (attack_images>=a).float()*attack_images + (a>attack_images).float()*a
+            c = (b > images+eps).float()*(images+eps) + (images+eps >= b).float()*b
+            images = torch.clamp(c, max=clamp_max).detach_()
+
+        h_adv = self.net(images)
+        return images, h_adv, output
+
+        """
+        h = self.net(x)
+        _, net_pred = torch.min(h.data, dim=1)
+        y_ll = net_pred
+        y_ll = y_ll.detach_()
         x_adv = Variable(x.data, requires_grad=True)
-        for i in range(iteration):
+        iter = int(min(255*epsilon+ 4, 255*1.25*epsilon))
+        for i in range(iter):
             h_adv = self.net(x_adv)
-            net_pred = torch.argsort(h_adv, dim=1)
-            target_idx = 0 
-            y_ll = net_pred[:,target_idx]
             if targeted:
                 cost = self.criterion(h_adv, y_ll)
             else:
                 cost = self.criterion(h_adv, y_ll)
-
             self.net.zero_grad()
 
             if x_adv.grad is not None:
@@ -97,63 +131,5 @@ class Attack(object):
         h_adv = self.net(x_adv)
         with torch.no_grad():
             adv_noise = x_adv - x
-        return x_adv, h_adv, h, adv_noise
-
-
-    def universal(self, args):
-        self.set_mode('eval')
-
-        init = False
-
-        correct = 0
-        cost = 0
-        total = 0
-
-        data_loader = self.data_loader['test']
-        for e in range(100000):
-            for batch_idx, (images, labels) in enumerate(data_loader):
-
-                x = Variable(cuda(images, self.cuda))
-                y = Variable(cuda(labels, self.cuda))
-
-                if not init:
-                    sz = x.size()[1:]
-                    r = torch.zeros(sz)
-                    r = Variable(cuda(r, self.cuda), requires_grad=True)
-                    init = True
-
-                logit = self.net(x+r)
-                p_ygx = F.softmax(logit, dim=1)
-                H_ygx = (-p_ygx*torch.log(self.epsilon+p_ygx)).sum(1).mean(0)
-                prediction_cost = H_ygx
-                #prediction_cost = F.cross_entropy(logit,y)
-                #perceptual_cost = -F.l1_loss(x+r,x)
-                #perceptual_cost = -F.mse_loss(x+r,x)
-                #perceptual_cost = -F.mse_loss(x+r,x) -r.norm()
-                perceptual_cost = -F.mse_loss(x+r, x) -F.relu(r.norm()-5)
-                #perceptual_cost = -F.relu(r.norm()-5.)
-                #if perceptual_cost.data[0] < 10: perceptual_cost.data.fill_(0)
-                cost = prediction_cost + perceptual_cost
-                #cost = prediction_cost
-
-                self.net.zero_grad()
-                if r.grad:
-                    r.grad.fill_(0)
-                cost.backward()
-
-                #r = r + args.eps*r.grad.sign()
-                r = r + r.grad*1e-1
-                r = Variable(cuda(r.data, self.cuda), requires_grad=True)
-
-
-
-                prediction = logit.max(1)[1]
-                correct = torch.eq(prediction, y).float().mean().data[0]
-                if batch_idx % 100 == 0:
-                    if self.visdom:
-                        self.vf.imshow_multi(x.add(r).data)
-                        #self.vf.imshow_multi(r.unsqueeze(0).data,factor=4)
-                    print(correct*100, prediction_cost.data[0], perceptual_cost.data[0],\
-                            r.norm().data[0])
-
-        self.set_mode('train')
+        return x_adv, h_adv, h
+        """

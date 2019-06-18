@@ -190,7 +190,7 @@ class Solver(object):
         if self.attack_mode == 'FGSM':
             x_adv, changed, values = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
         elif self.attack_mode == 'ILLC':
-            x_adv, changed, values = self.IterativeLeastlikely(x_true, y_true, y_target, epsilon, alpha, iteration)
+            x_adv, changed, values = self.ILLC(x_true, y_true, y_target, epsilon, alpha, iteration)
         accuracy, cost, accuracy_adv, cost_adv = values
 
         # save the result image, you can find in outputs/experiment_name
@@ -258,7 +258,7 @@ class Solver(object):
                 if self.attack_mode == 'FGSM':
                     x[:num_adv_image], _, _ = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
                 elif self.attack_mode == 'ILLC':
-                    x[:num_adv_image], _, _ = self.IterativeLeastlikely(x_true, y_true, y_target, epsilon, alpha, iteration)
+                    x[:num_adv_image], _, _ = self.ILLC(x_true, y_true, y_target, epsilon, alpha, iteration)
 
                 self.set_mode('train')
                 logit = self.net(x)
@@ -299,7 +299,7 @@ class Solver(object):
             break
         return x_true, y_true
 
-    def IterativeLeastlikely(self, x, y_true, y_target=None, eps=0.03, alpha=2/255, iteration=1):
+    def ILLC(self, x, y_true, y_target=None, eps=0.03, alpha=2/255, iteration=1):
         self.set_mode('eval')
         x = Variable(cuda(x, self.cuda), requires_grad=True)
         y_true = Variable(cuda(y_true, self.cuda), requires_grad=False)
