@@ -161,19 +161,20 @@ class Solver(object):
             total += x.size(0)
         accuracy = correct / total
         cost /= total
-        if self.print_:
-            print()
-            print('[{:03d}]\nTEST RESULT'.format(self.global_epoch))
-            print('ACC:{:.4f}'.format(accuracy))
-            print('*TOP* ACC:{:.4f} at e:{:03d}'.format(accuracy, self.global_epoch,))
-            print()
-
 
         if self.history['acc'] < accuracy:
             self.history['acc'] = accuracy
             self.history['epoch'] = self.global_epoch
             self.history['iter'] = self.global_iter
             self.save_checkpoint('best_acc.tar')
+
+        if self.print_:
+            print()
+            print('[{:03d}]\nTEST RESULT'.format(self.global_epoch))
+            print('ACC:{:.4f}'.format(self.history['acc']))
+            print('*TOP* ACC:{:.4f} at e:{:03d}'.format(self.history['acc'], self.global_epoch,))
+            print()
+
         self.set_mode('train')
         return accuracy
 
