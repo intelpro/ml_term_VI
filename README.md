@@ -13,17 +13,9 @@ pytorch 1.0.1 post2
 4. 추가적인 attack 방법?(optinal)
 
 ### Usage
-1. train a simple MNIST classifier
+1. running examples
 ```
-python main.py --mode train --env_name [NAME]
-```
-2. load trained classifier, generate adversarial examples, and then see outputs in the output directory
-```
-python main.py --mode generate --iteration 1 --epsilon 0.03 --env_name [NAME] --load_ckpt best_acc.tar
-```
-3. for a targeted attack, indicate target class number using ```--target``` argument(default is -1 for a non-targeted attack)
-```
-python main.py --mode generate --iteration 1 --epsilon 0.03 --target 3 --env_name [NAME] --load_ckpt best_acc.tar
+sh run.sh 
 ```
 <br>
 
@@ -48,9 +40,3 @@ from the left, legitimate examples, perturbed examples, and indication of pertur
 ![targeted3](misc/targetd_9_3.PNG)
 <br>
 
-### References
-1. explaining and harnessing adversarial examples, Goodfellow et al.
-2. adversarial examples in the physical world, Kurakin et al.
-
-[explaining and harnessing adversarial examples, Goodfellow et al.]: https://arxiv.org/abs/1412.6572
-[adversarial examples in the physical world, Kurakin et al.]: http://arxiv.org/abs/1607.02533
