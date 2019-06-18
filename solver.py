@@ -94,9 +94,9 @@ class Solver(object):
 
     def train(self):
         self.set_mode('train')
-        acc_train_plt = []
+        acc_train_plt = [0]
         loss_plt = []
-        acc_test_plt = []
+        acc_test_plt = [0]
         for e in range(self.epoch):
             self.global_epoch += 1
             local_iter = 0 
@@ -224,8 +224,8 @@ class Solver(object):
 
     def ad_train(self, target, epsilon, alpha, iteration, lamb):
         self.set_mode('train')
-        acc_train_plt = []
-        acc_test_plt = []
+        acc_train_plt = [0]
+        acc_test_plt = [0]
         loss_plt = []
         for e in range(self.epoch):
             self.global_epoch += 1
@@ -384,14 +384,7 @@ class Solver(object):
                 x_adv, h_adv, h, adv_noise = self.attack.fgsm(x, y_target, True, eps)
             else:
                 x_adv, h_adv, h,adv_noise = self.attack.fgsm(x, y_true, False, eps)
-            """
-                adv_cpu = self.convert_torch2numpy(adv_noise)
-                x_cpu = self.convert_torch2numpy(x)
-                self.plot_img(adv_cpu,2,'adversarial noise')
-                self.plot_img(x_cpu,2,'original image')
-                plt.show()
-                import pdb; pdb.set_trace()
-                """
+
         else:
             if targeted:
                 x_adv, h_adv, h = self.attack.i_fgsm(x, y_target, True, eps, alpha, iteration)
@@ -490,18 +483,18 @@ class Solver(object):
         plt.imshow(np_img[idx], interpolation='nearest')
 
     def plot_result(self, acc_train_plt, acc_test_plt, loss_plt, title='train_graph'):
-        epoch = range(0, self.epoch)
+        epoch = range(0, self.epoch+1)
         fig, ax1 = plt.subplots()
         ax1.plot(epoch, acc_train_plt, label='train_acc')
         ax1.plot(epoch, acc_test_plt, label='test_acc')
         ax1.set_xlabel('epoch')
         ax1.set_ylabel('accuracy')
         ax1.tick_params(axis='y')
+        plt.legend(loc='upper left')
         color = 'tab:red'
         ax2 = ax1.twinx()
-        ax2.plot(epoch, loss_plt, linestyle="--", label='train_loss', color=color)
+        ax2.plot(epoch[1:], loss_plt, linestyle="--", label='train_loss', color=color)
         ax2.set_ylabel('loss', color=color)
         ax2.tick_params(axis='y', labelcolor=color)
-        plt.legend(loc='upper left')
         plt.title("{}".format(self.env_name))
         plt.savefig('{}/{}/{}.png'.format(self.args.output_dir, self.env_name,title), dpi=350)
