@@ -173,7 +173,7 @@ class Solver(object):
         self.set_mode('train')
         return accuracy
 
-    def generate(self, target, epsilon, alpha iteration):
+    def generate(self, target, epsilon, alpha, iteration):
         self.set_mode('eval')
         x_true, y_true = self.sample_data() # take sample which size is batch_size
         if isinstance(target, int) and (target in range(self.y_dim)):
