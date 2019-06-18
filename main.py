@@ -31,7 +31,8 @@ def main(args):
         solver.ad_train(target=args.target,
                      epsilon=args.epsilon,
                      alpha=args.alpha,
-                     iteration=args.iteration)
+                     iteration=args.iteration,
+                     lamb=0.3)
     elif args.mode == 'universal':
         solver.universal(args)
     else: return
