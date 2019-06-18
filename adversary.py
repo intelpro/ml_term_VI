@@ -40,9 +40,10 @@ class Attack(object):
 
         return x_adv, h_adv, h, adv_noise
 
-    def i_fgsm(self, x, y, targeted=False, epsilon=0.03, alpha=1, iteration=1, x_val_min=-1, x_val_max=1):
+    def i_fgsm(self, x, y, targeted=False, epsilon=0.03, alpha=1, x_val_min=-1, x_val_max=1):
         x_adv = Variable(x.data, requires_grad=True)
-        for i in range(iteration):
+        iters = int(min(255*eps + 4, 255*1.25*eps))
+        for i in range(iters):
             h_adv = self.net(x_adv)
             if targeted:
                 cost = self.criterion(h_adv, y)
@@ -67,13 +68,11 @@ class Attack(object):
 
         return x_adv, h_adv, h
 
-    def IterativeLeastlikely(self,images, y, targeted=False, eps=0.03, alpha=1, iters=1, x_val_min=-1, x_val_max=1):
+    def IterativeLeastlikely(self,images, y, targeted=False, eps=0.03, alpha=1, x_val_min=-1, x_val_max=1):
         output = self.net(images)
         _, labels = torch.min(output.data, 1)
         labels = labels.detach_()
-            
         clamp_max = 255
-
         # The paper said min(eps + 4, 1.25*eps) is used as iterations
         iters = int(min(255*eps + 4, 255*1.25*eps))
             

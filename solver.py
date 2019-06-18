@@ -358,16 +358,10 @@ class Solver(object):
         cost = F.cross_entropy(h, y_true)
 
         # adversarial image classification
-        if iteration == 1:
-            if targeted:
-                x_adv, h_adv, h = self.attack.IterativeLeastlikely(x, y_target, True, eps)
-            else:
-                x_adv, h_adv, h = self.attack.IterativeLeastlikely(x, y_true, False, eps)
+        if targeted:
+            x_adv, h_adv, h = self.attack.IterativeLeastlikely(x, y_target, True, eps, alpha)
         else:
-            if targeted:
-                x_adv, h_adv, h, adv_noise = self.attack.IterativeLeastlikely(x, y_target, True, eps, alpha, iteration)
-            else:
-                x_adv, h_adv, h, adv_noise = self.attack.IterativeLeastlikely(x, y_true, False, eps, alpha, iteration)
+            x_adv, h_adv, h = self.attack.IterativeLeastlikely(x, y_true, False, eps, alpha)
 
         prediction_adv = h_adv.max(1)[1]
         accuracy_adv = torch.eq(prediction_adv, y_true).float().mean()
@@ -423,17 +417,10 @@ class Solver(object):
         cost = F.cross_entropy(h, y_true)
 
         # adversarial image classification
-        if iteration == 1:
-            if targeted:
-                x_adv, h_adv, h, adv_noise = self.attack.fgsm(x, y_target, True, eps)
-            else:
-                x_adv, h_adv, h,adv_noise = self.attack.fgsm(x, y_true, False, eps)
-
+        if targeted:
+            x_adv, h_adv, h = self.attack.i_fgsm(x, y_target, True, eps, alpha)
         else:
-            if targeted:
-                x_adv, h_adv, h = self.attack.i_fgsm(x, y_target, True, eps, alpha, iteration)
-            else:
-                x_adv, h_adv, h = self.attack.i_fgsm(x, y_true, False, eps, alpha, iteration)
+            x_adv, h_adv, h = self.attack.i_fgsm(x, y_true, False, eps, alpha)
 
         prediction_adv = h_adv.max(1)[1]
         accuracy_adv = torch.eq(prediction_adv, y_true).float().mean()
