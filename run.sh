@@ -1,10 +1,10 @@
 mode=train # generate or train or test or ad_train
 load_ckpt_flag=False # if you want to train from scratch, flag should be false
+ckpt_dir=checkpoints/RestNet18_MNIST # loading ckpt directory name
 attack_mode=FGSM #FGSM or ILLC
 network_choice=ResNet18 # ResNet18 or ResNet34 or ResNet50 or ResNet101
-env_name=ResNet18_vanilla_for_plot # ckpt save directory
-ckpt_dir=checkpoints/ResNet18_test # loading ckpt directory name
-dataset=CIFAR10 # MNIST or CIFAR10
+env_name=MNIST_ResNet18 # ckpt save directory
+dataset=MNIST # MNIST or CIFAR10
 batch_size=128
 learning_rate=5e-4
 epsilon=0.5
