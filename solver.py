@@ -141,7 +141,7 @@ class Solver(object):
             loss_plt.append(total_loss)
             acc_test_plt.append(self.test())
         print(" [*] Training Finished!")
-        self.plot_result(acc_train_plt, acc_test_plt, loss_plt)
+        self.plot_result(acc_train_plt, acc_test_plt, loss_plt, self.history['acc'])
 
     def test(self):
         self.set_mode('eval')
@@ -526,7 +526,7 @@ class Solver(object):
         plt.title(title)
         plt.imshow(np_img[idx], interpolation='nearest')
 
-    def plot_result(self, acc_train_plt, acc_test_plt, loss_plt, title='train_graph'):
+    def plot_result(self, acc_train_plt, acc_test_plt, loss_plt, best_acc, title='train_graph'):
         epoch = range(0, self.epoch+1)
         fig, ax1 = plt.subplots()
         ax1.plot(epoch, acc_train_plt, label='train_acc')
@@ -541,4 +541,4 @@ class Solver(object):
         ax2.set_ylabel('loss', color=color)
         ax2.tick_params(axis='y', labelcolor=color)
         plt.title("{}".format(self.env_name))
-        plt.savefig('{}/{}/{}.png'.format(self.args.output_dir, self.env_name,title), dpi=350)
+        plt.savefig('{}/{}/best_acc_{}.png'.format(self.args.output_dir, self.env_name, best_acc), dpi=350)
