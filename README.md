@@ -12,8 +12,6 @@ modify run.sh file then run
 ```
 sh run.sh 
 ```
-<br>
-
 ### Code reference
 https://github.com/1Konny/FGSM
 
