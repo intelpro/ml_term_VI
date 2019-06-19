@@ -24,3 +24,4 @@ https://github.com/1Konny/FGSM
 4. ResNet model has been added
 5. plot and save graph code has been added
 6. run.sh has been added
+7. overall check and modify for compatibility 
