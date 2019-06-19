@@ -15,11 +15,11 @@ from utils.utils import cuda, where
 from adversary import Attack
 from torchvision import transforms
 
-# this class include triain/test/generate
+# this class include triain/test/generate/ad_train/ad_test
 class Solver(object):
     def __init__(self, args):
         self.args = args
-        # Basic
+        # Basic, load args value
         self.cuda = (args.cuda and torch.cuda.is_available())
         self.epoch = args.epoch
         self.batch_size = args.batch_size
@@ -58,7 +58,7 @@ class Solver(object):
         self.model_init(args)
         self.load_ckpt = args.load_ckpt
         if args.load_ckpt_flag == True and self.load_ckpt != '':
-            self.load_checkpoint(self.load_ckpt)
+            self.load_checkpoint(self.load_ckpt) #load trained weights
 
         # Adversarial Perturbation Generator
         #criterion = cuda(torch.nn.CrossEntropyLoss(), self.cuda)
@@ -96,6 +96,7 @@ class Solver(object):
         self.optim = optim.Adam([{'params':self.net.parameters(), 'lr':self.lr}],
                                 betas=(0.5, 0.999))
 
+    # train network with clean dataset
     def train(self):
         self.set_mode('train')
         acc_train_plt = [0]
@@ -109,6 +110,7 @@ class Solver(object):
             total = 0.
             total_acc = 0.
             total_loss = 0.
+            # train for each batch iteration
             for batch_idx, (images, labels) in enumerate(self.data_loader['train']):
                 self.global_iter += 1
                 local_iter += 1
@@ -126,9 +128,10 @@ class Solver(object):
                 total_loss += cost.data.item()
 
                 self.optim.zero_grad()
-                cost.backward()
+                cost.backward() #back propagation
                 self.optim.step()
-
+                
+                #for every 100th batch show accuracy and loss information of training result
                 if batch_idx % 100 == 0:
                     if self.print_:
                         print()
@@ -139,10 +142,12 @@ class Solver(object):
             total_loss = total_loss/local_iter
             acc_train_plt.append(total_acc)
             loss_plt.append(total_loss)
-            acc_test_plt.append(self.test())
+            acc_test_plt.append(self.test()) #show test results every epochs and save in acc_test_plt.
         print(" [*] Training Finished!")
-        self.plot_result(acc_train_plt, acc_test_plt, loss_plt, self.history['acc'])
+        self.plot_result(acc_train_plt, acc_test_plt, loss_plt, self.history['acc']) 
+        #plot results in graph and save to image, this function is defined in below
 
+    # test network with clean images
     def test(self):
         self.set_mode('eval')
         correct = 0.
@@ -177,7 +182,8 @@ class Solver(object):
 
         self.set_mode('train')
         return accuracy
-
+    
+    # generate perturbation images
     def generate(self, target, epsilon, alpha, iteration):
         self.set_mode('eval')
         x_true, y_true = self.sample_data() # take sample which size is batch_size
@@ -186,8 +192,8 @@ class Solver(object):
         else:
             y_target = None
 
-        # generate pertubation images, inside of self.FGSM, there are fgsm and i-fgsm method
-        # please implement last one 'iterative least likely method'
+        # generate perturbation images, inside of self.FGSM(defined below), there are fgsm and i-fgsm method
+        # self.ILLC(defined below), there is illc methof
         if self.attack_mode == 'FGSM':
             x_adv, changed, values = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
         elif self.attack_mode == 'ILLC':
@@ -201,21 +207,21 @@ class Solver(object):
                                                                                     iteration)),
                    nrow=10,
                    padding=2,
-                   pad_value=0.5)
+                   pad_value=0.5) # save clean images in one batch size
         save_image(x_adv,
                    self.output_dir.joinpath('perturbed(t:{},e:{},i:{}).jpg'.format(target,
                                                                                    epsilon,
                                                                                    iteration)),
                    nrow=10,
                    padding=2,
-                   pad_value=0.5)
+                   pad_value=0.5) # save perturbation(attacked) images in one batch size
         save_image(changed,
                    self.output_dir.joinpath('changed(t:{},e:{},i:{}).jpg'.format(target,
                                                                                  epsilon,
                                                                                  iteration)),
                    nrow=10,
                    padding=3,
-                   pad_value=0.5)
+                   pad_value=0.5) # save perturbation(attacked) images and classified result(by color) in one batch size
 
         if self.visdom:
             self.vf.imshow_multi(x_true.cpu(), title='legitimate', factor=1.5)
@@ -224,9 +230,11 @@ class Solver(object):
 
         print('[BEFORE] accuracy : {:.2f} cost : {:.3f}'.format(accuracy, cost))
         print('[AFTER] accuracy : {:.2f} cost : {:.3f}'.format(accuracy_adv, cost_adv))
+        # show results of network performance to clean images and perturbated images
 
         self.set_mode('train')
 
+    # adversarial training
     def ad_train(self, target, alpha, iteration, lamb):
         self.set_mode('train')
         acc_train_plt = [0]
@@ -245,12 +253,14 @@ class Solver(object):
                 local_iter += 1
                 self.set_mode('eval')
 
-
+                # compute k-number that how many of adversarial examples we will generate in each minibatch
                 num_adv_image = self.batch_size//2
-
+                
+                # save images and labels which to generate to adversarial examples
                 x_true = Variable(cuda(images[:num_adv_image], self.cuda))
                 y_true = Variable(cuda(labels[:num_adv_image], self.cuda))
-
+                
+                # save clean images and labels
                 x = Variable(cuda(images, self.cuda))
                 y = Variable(cuda(labels, self.cuda))
 
@@ -258,11 +268,14 @@ class Solver(object):
                     y_target = torch.LongTensor(y_true.size()).fill_(target)
                 else:
                     y_target = None
-
+                
+                # get random value of epsilon through normal distribution in every batch iteration
+                # if random epsilon value get overs to truncate value, set to 0.
                 epsilon = abs(np.random.normal(0, 8 / 255))
                 if epsilon > 16 / 255:
                     epsilon = 0
-
+                
+                # differ to attack method, generate adversarial examples
                 if self.attack_mode == 'FGSM':
                     x[:num_adv_image], _, _ = self.FGSM(x_true, y_true, y_target, epsilon, alpha, iteration)
                 elif self.attack_mode == 'ILLC':
@@ -273,6 +286,9 @@ class Solver(object):
                 prediction = logit.max(1)[1]
 
                 correct = torch.eq(prediction, y).float().mean().data.item()
+                
+                # The loss function is redefined with relative weight lambda as we have to more focus on clean data 
+                # lambda is set to 0.3
                 cost = (F.cross_entropy(logit[num_adv_image:], y[num_adv_image:]) \
                         + lamb*F.cross_entropy(logit[:num_adv_image], y[:num_adv_image]))*num_adv_image \
                         /(self.batch_size -(1-lamb)*num_adv_image)
@@ -299,6 +315,7 @@ class Solver(object):
         print(" [*] Training Finished!")
         self.plot_result(acc_train_plt, acc_test_plt, loss_plt, self.history['acc'])
 
+    # generate all test dataset to adversarial images and test the performance of trained network
     def ad_test(self, target, epsilon, alpha, iteration):
         self.set_mode('eval')
         correct = 0.
