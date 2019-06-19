@@ -1,5 +1,5 @@
-mode=ad_train # generate or train or test or ad_train
-load_ckpt_flag=True # if you want to train from scratch, flag should be false
+mode=ad_train # generate / train / test / ad_train / ad_test
+load_ckpt_flag=True # if you want to train from scratch, flag should be false. True would be load weight file
 ckpt_dir=checkpoints/CIFAR_vanila # loading ckpt directory name
 env_name=CIFAR_vanila # ckpt save directory
 dataset=CIFAR10 # MNIST or CIFAR10
