@@ -14,13 +14,14 @@ class Attack(object):
     def __init__(self, net, criterion):
         self.net = net
         self.criterion = criterion
-
+        
+    #Fast gradient sign method & One-step target class method
     def fgsm(self, x, y, targeted=False, epsilon=0.03, x_val_min=-1, x_val_max=1):
         x_adv = Variable(x.data, requires_grad=True)
         h_adv = self.net(x_adv)
-        if targeted:
+        if targeted: #One-step target class method/ input y would have target y
             cost = self.criterion(h_adv, y)
-        else:
+        else: #Fast gradient sign method
             cost = -self.criterion(h_adv, y)
 
         self.net.zero_grad()
@@ -39,7 +40,8 @@ class Attack(object):
             adv_noise = x - x_adv
 
         return x_adv, h_adv, h, adv_noise
-
+    
+    #Basic iterative method
     def i_fgsm(self, x, y, targeted=False, epsilon=0.03, alpha=1, x_val_min=-1, x_val_max=1):
         x_adv = Variable(x.data, requires_grad=True)
         iters = int(min(255*eps + 4, 255*1.25*eps))
@@ -68,6 +70,7 @@ class Attack(object):
 
         return x_adv, h_adv, h
 
+    #Iterative least-likely class method
     def IterativeLeastlikely(self,images, y, targeted=False, eps=0.03, alpha=1, x_val_min=-1, x_val_max=1):
         output = self.net(images)
         _, labels = torch.min(output.data, 1)
