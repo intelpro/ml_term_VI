@@ -77,7 +77,7 @@ class Solver(object):
             self.vf = VisFunc(enval=self.env_name, port=self.port)
 
     def model_init(self, args):
-        # Network
+        # Network, defined in models folder, toynet.py and resnet.py
         if args.dataset =='MNIST':
             print("MNIST")
             self.net = cuda(ToyNet_MNIST(y_dim=self.y_dim), self.cuda)
