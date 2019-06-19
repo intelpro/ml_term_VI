@@ -67,9 +67,9 @@ if __name__ == "__main__":
     #######################################################################################################
     # These are the parameters we control.
     
-    # Datasets(Cifar10, MNIST)
+    # Datasets(Cifar10, MNIST), loading dataset code is defined in datasets folder datasets.py
     parser.add_argument('--dataset', type=str, default='CIFAR10', help='dataset type')  # change to 'MNIST, 'CIFAR10'
-    # Network we use(ToyNet for Mnist, ResNet18 for Cifar10)
+    # Network we use(ToyNet for Mnist, ResNet18 for Cifar10), Network defined in models folder, resnet.py and toynet.py
     parser.add_argument('--network_choice', type=str, required=True, choices=['ToyNet', 'ResNet18', 'ResNet34', 'ResNet50', 'ResNet101'])
     parser.add_argument('--env_name', type=str, default='ResNet_test', help='experiment name') # save folder name
     # These are the modes of main code. 'train' : train from vanila datasets, 'generate' : generate the perturbed images, 'test' : test from vanila datasets,
