@@ -1,4 +1,4 @@
-mode=train # generate or train or test or ad_train
+mode=ad_train # generate or train or test or ad_train
 load_ckpt_flag=True # if you want to train from scratch, flag should be false
 ckpt_dir=checkpoints/CIFAR_vanila # loading ckpt directory name
 env_name=CIFAR_vanila # ckpt save directory
