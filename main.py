@@ -17,7 +17,8 @@ def main(args):
     np.set_printoptions(precision=4)
     torch.set_printoptions(precision=4)
     solver = Solver(args)
-
+    
+    # modes of main.py 
     if args.mode == 'train':
         solver.train()
     elif args.mode == 'test':
@@ -62,15 +63,25 @@ if __name__ == "__main__":
     parser.add_argument('--visdom', type=str2bool, default=False, help='enable visdom')
     parser.add_argument('--visdom_port', type=str, default=55558, help='visdom port')
     #######################################################################################################
+    # These are the parameters we control.
+    
+    # Datasets(Cifar10, MNIST)
     parser.add_argument('--dataset', type=str, default='CIFAR10', help='dataset type')  # change to 'MNIST, 'CIFAR10'
+    # Network we use(ToyNet for Mnist, ResNet18 for Cifar10)
     parser.add_argument('--network_choice', type=str, required=True, choices=['ToyNet', 'ResNet18', 'ResNet34', 'ResNet50', 'ResNet101'])
     parser.add_argument('--env_name', type=str, default='ResNet_test', help='experiment name') # save folder name
+    # These are the modes of main code. 'train' : train from vanila datasets, 'generate' : generate the purtubated images, 'test' : test from vanila datasets,
+    #                                   'ad_train' : adversarial train with purtebated images, don't need to set the epsilon
+    #                                   'ad_test' : test for adversarial training
+    
     parser.add_argument('--mode', type=str, default='train',
                                             choices=['train', 'generate', 'test', 'ad_train', 'ad_test'],
                                             help='train / test / generate / ad_train')
     # change to 100 when you make output figure because the output grid depends on this parameter
     parser.add_argument('--batch_size', type=int, default=100, help='mini-batch size')
+    #Epsilon for adversarial noise, we give input value as 0 to 1 by divided 255(pixel/pixel) 
     parser.add_argument('--epsilon', type=float, default=128/255, help='epsilon for FGSM and i-FGSM') #change the magnitude of pertubation
+    
     #######################################################################################################
     args = parser.parse_args()
     main(args)
