@@ -95,6 +95,10 @@ class Solver(object):
         # setup optimizer
         self.optim = optim.Adam([{'params':self.net.parameters(), 'lr':self.lr}],
                                 betas=(0.5, 0.999))
+        
+####################################################################################################
+######                               Main functions defined                                    #####
+####################################################################################################
 
     # train network with clean dataset
     def train(self):
@@ -347,7 +351,10 @@ class Solver(object):
         cost /= total
         print('ACC:{:.4f}'.format(accuracy))
         self.set_mode('train')
-
+     
+###########################################end################################################
+##############################################################################################
+        
     #sample data which size is batch size
     def sample_data(self):
         data_loader = self.data_loader['test']
@@ -356,6 +363,10 @@ class Solver(object):
             y_true = Variable(cuda(labels, self.cuda))
             break
         return x_true, y_true
+
+#############################################################################################
+#####                           ILLC and FGSM defined                                   #####
+#############################################################################################
 
     def ILLC(self, x, y_true, y_target=None, eps=0.03, alpha=2/255, iteration=1):
         self.set_mode('eval')
@@ -474,7 +485,10 @@ class Solver(object):
         return x_adv.data, changed.data,\
                 (accuracy.data.item(), cost.data.item(), accuracy_adv.data.item(), cost_adv.data.item())
 
-    def save_checkpoint(self, filename='ckpt.tar'):
+ ##########################################################################################################
+ ##########################################################################################################
+    
+    def save_checkpoint(self, filename='ckpt.tar'): #save weights
         model_states = {
             'net':self.net.state_dict(),
             }
@@ -495,7 +509,7 @@ class Solver(object):
         torch.save(states, file_path.open('wb+'))
         print("=> saved checkpoint '{}' (iter {})".format(file_path, self.global_iter))
 
-    def load_checkpoint(self, filename='best_acc.tar'):
+    def load_checkpoint(self, filename='best_acc.tar'): #load weights
         file_path = self.ckpt_dir / filename
         if file_path.is_file():
             print("=> loading checkpoint '{}'".format(file_path))
@@ -509,6 +523,7 @@ class Solver(object):
 
         else:
             print("=> no checkpoint found at '{}'".format(file_path))
+            
     # change the model mode
     def set_mode(self, mode='train'):
         if mode == 'train':
@@ -526,12 +541,12 @@ class Solver(object):
         # PIL_image = transforms.ToPILImage()(transforms.ToTensor()(np_img),interpolation="bicubic")
         return np_img
 
-    def plot_img(self, np_img, idx, title):
+    def plot_img(self, np_img, idx, title): #plot image
         plt.figure()
         plt.title(title)
         plt.imshow(np_img[idx], interpolation='nearest')
 
-    def plot_result(self, acc_train_plt, acc_test_plt, loss_plt, best_acc, title='train_graph'):
+    def plot_result(self, acc_train_plt, acc_test_plt, loss_plt, best_acc, title='train_graph'): #save graph to image
         epoch = range(0, self.epoch+1)
         fig, ax1 = plt.subplots()
         ax1.plot(epoch, acc_train_plt, label='train_acc')
