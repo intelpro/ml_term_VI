@@ -72,8 +72,8 @@ if __name__ == "__main__":
     # Network we use(ToyNet for Mnist, ResNet18 for Cifar10)
     parser.add_argument('--network_choice', type=str, required=True, choices=['ToyNet', 'ResNet18', 'ResNet34', 'ResNet50', 'ResNet101'])
     parser.add_argument('--env_name', type=str, default='ResNet_test', help='experiment name') # save folder name
-    # These are the modes of main code. 'train' : train from vanila datasets, 'generate' : generate the purtubated images, 'test' : test from vanila datasets,
-    #                                   'ad_train' : adversarial train with purtebated images, don't need to set the epsilon
+    # These are the modes of main code. 'train' : train from vanila datasets, 'generate' : generate the perturbed images, 'test' : test from vanila datasets,
+    #                                   'ad_train' : adversarial train with pertured images, don't need to set the epsilon
     #                                   'ad_test' : test for adversarial training
     
     parser.add_argument('--mode', type=str, default='train',
