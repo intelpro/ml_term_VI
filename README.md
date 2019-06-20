@@ -1,4 +1,4 @@
-# KSE801 Term Project
+# KSE801/IE801 Term Project
 
 ### Dependencies
 ```
