@@ -1,4 +1,4 @@
-# machine learning term project 
+# KSE801 Term Project
 
 ### Dependencies
 ```
